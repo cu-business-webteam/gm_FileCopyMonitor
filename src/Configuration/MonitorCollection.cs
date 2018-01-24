@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace Johnson.FileCopyMonitor.Configuration {
 
+	[System.Serializable]
 	public sealed class MonitorCollection : NamedConfigurationElementCollectionBase<MonitorElement> {
 
 		#region .ctor

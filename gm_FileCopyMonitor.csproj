@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\Configuration\ExecuteElement.cs" />
+    <Compile Include="src\Configuration\FileCopyMonitorSection.cs" />
     <Compile Include="src\Configuration\FilterElement.cs" />
     <Compile Include="src\Configuration\MonitorCollection.cs" />
     <Compile Include="src\Configuration\MonitorElement.cs" />

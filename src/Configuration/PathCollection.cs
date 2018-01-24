@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace Johnson.FileCopyMonitor.Configuration {
 
+	[System.Serializable]
 	public sealed class PathCollection : ConfigurationElementCollectionBase<PathElement> {
 
 		#region .ctor

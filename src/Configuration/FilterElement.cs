@@ -2,6 +2,7 @@
 
 namespace Johnson.FileCopyMonitor.Configuration {
 
+	[System.Serializable]
 	public sealed class FilterElement : System.Configuration.ConfigurationElement {
 
 		#region .ctor
