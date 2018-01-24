@@ -21,13 +21,14 @@ namespace Johnson.FileCopyMonitor.Configuration {
 				this[ "path" ] = value;
 			}
 		}
+
 		[System.Configuration.ConfigurationProperty( "", IsDefaultCollection = true, IsRequired = false )]
 		[System.Configuration.ConfigurationCollection( typeof( FilterCollection ),
 			AddItemName = "add",
 			ClearItemsName = "clear",
 			RemoveItemName = "remove"
 		)]
-		public FilterCollection Parameters {
+		public FilterCollection Filters {
 			get {
 				return (FilterCollection)base[ "" ];
 			}
