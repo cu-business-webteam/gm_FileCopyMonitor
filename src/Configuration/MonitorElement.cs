@@ -25,6 +25,16 @@ namespace Johnson.FileCopyMonitor.Configuration {
 			}
 		}
 
+		[System.Configuration.ConfigurationProperty( "interval", DefaultValue = 30, IsRequired = false, IsKey = false )]
+		public System.Int32 Interval {
+			get {
+				return (System.Int32)this[ "interval" ];
+			}
+			set {
+				this[ "interval" ] = value;
+			}
+		}
+
 		[System.Configuration.ConfigurationProperty( "paths", IsDefaultCollection = false, IsRequired = false )]
 		[System.Configuration.ConfigurationCollection( typeof( PathCollection ),
 			AddItemName = "add",
