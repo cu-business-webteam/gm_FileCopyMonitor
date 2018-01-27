@@ -22,7 +22,7 @@ namespace Johnson.FileCopyMonitor {
 			myTimer = new System.Threading.Timer( Process.OnAlarm, this, -1, 0 );
 			myFilePathName = System.Collections.Immutable.ImmutableHashSet<System.String>.Empty;
 			myState = 0;
-			myFileSystemWatcher = System.Collections.Immutable.ImmutableHashSet<System.IO.FileSystemWatcher>.Empty;
+			myFileSystemWatcher = new System.Collections.Immutable.ImmutableHashSet<System.IO.FileSystemWatcher>.Empty;
 			var exec = configuration.Execute;
 			if ( null != exec ) {
 				this.Arguments = exec.Arguments;
@@ -76,12 +76,6 @@ namespace Johnson.FileCopyMonitor {
 			set;
 		}
 
-		internal System.Threading.Timer Timer {
-			get {
-				return myTimer;
-			}
-		}
-
 		public System.Collections.Generic.IReadOnlyCollection<System.IO.FileSystemWatcher> FileSystemWatcher {
 			get {
 				return myFileSystemWatcher;
@@ -108,7 +102,7 @@ namespace Johnson.FileCopyMonitor {
 					fsw.EnableRaisingEvents = false;
 					fsw.Dispose();
 				}
-				myTimer.Change( -1, 0 );
+				this.SetTimer( -1 );
 				myTimer.Dispose();
 				try {
 					myExecutable.Kill();
@@ -119,17 +113,22 @@ namespace Johnson.FileCopyMonitor {
 		}
 
 		public void Stop() {
-			this.Dispose();
+			foreach ( var fsw in myFileSystemWatcher ) {
+				fsw.EnableRaisingEvents = false;
+			}
+			this.SetTimer( -1 );
+			try {
+				myExecutable.Kill();
+			} catch ( System.Exception ) {
+				;
+			}
 		}
 		public void Pause() {
 			foreach ( var fsw in myFileSystemWatcher ) {
 				fsw.EnableRaisingEvents = false;
 			}
-			this.Timer.Change( -1, 0 );
 		}
 		public void Continue() {
-			System.Collections.Immutable.IImmutableSet<System.String> res;
-			System.Collections.Immutable.IImmutableSet<System.String> original;
 			foreach ( var fsw in myFileSystemWatcher.Where(
 				x => !x.EnableRaisingEvents
 			) ) {
@@ -139,7 +138,7 @@ namespace Johnson.FileCopyMonitor {
 				fsw.EnableRaisingEvents = true;
 			}
 			if ( 0 < myFilePathName.Count ) {
-				this.Timer.Change( this.Interval, 0 );
+				this.SetTimer( this.Interval );
 			}
 		}
 		public void Start() {
@@ -152,7 +151,7 @@ namespace Johnson.FileCopyMonitor {
 				this.AddFileToList( fp );
 			}
 			if ( 0 < myFilePathName.Count ) {
-				this.Timer.Change( this.Interval, 0 );
+				this.SetTimer( this.Interval );
 			}
 		}
 		private void OnCreated( System.Object sender, System.IO.FileSystemEventArgs e ) {
@@ -161,7 +160,7 @@ namespace Johnson.FileCopyMonitor {
 				this.AddFileToList( fp );
 			}
 			if ( 0 < myFilePathName.Count ) {
-				this.Timer.Change( this.Interval, 0 );
+				this.SetTimer( this.Interval );
 			}
 		}
 		private void OnRename( System.Object sender, System.IO.RenamedEventArgs e ) {
@@ -173,7 +172,7 @@ namespace Johnson.FileCopyMonitor {
 				this.AddFileToList( fp );
 			}
 			if ( 0 < myFilePathName.Count ) {
-				this.Timer.Change( this.Interval, 0 );
+				this.SetTimer( this.Interval );
 			}
 		}
 
@@ -194,12 +193,19 @@ namespace Johnson.FileCopyMonitor {
 		private void RemoveFileFromList( System.String file ) {
 			System.Collections.Immutable.IImmutableSet<System.String> res;
 			System.Collections.Immutable.IImmutableSet<System.String> original;
-			while ( myFilePathName.Contains( file, System.StringComparer.OrdinalIgnoreCase ) ) {
+			while ( myFilePathName.Contains( file ) ) {
 				do {
 					original = myFilePathName;
 					res = System.Threading.Interlocked.CompareExchange<System.Collections.Immutable.IImmutableSet<System.String>>( ref myFilePathName, myFilePathName.Remove( file ), original );
 				} while ( myFilePathName.Contains( file ) );
 			}
+		}
+
+		private void SetTimer( System.Int32 interval ) {
+			myTimer.Change( interval, 0 );
+		}
+		private void SetTimer( System.Int32 interval, System.Int32 dueTime ) {
+			myTimer.Change( interval, dueTime );
 		}
 		#endregion methods
 
@@ -214,12 +220,12 @@ namespace Johnson.FileCopyMonitor {
 				return;
 			}
 			if ( 0 != System.Threading.Volatile.Read( ref proc.myState ) ) {
-				proc.Timer.Change( proc.Interval, 0 );
+				proc.SetTimer( proc.Interval );
 				return;
 			}
 			System.Boolean movedAny = false;
 			System.Boolean someLocked = false;
-			var list = proc.myFilePathName;
+			var list = proc.FilePathName;
 			foreach ( var file in list ) {
 				if ( !System.IO.File.Exists( file ) ) {
 					proc.RemoveFileFromList( file );
@@ -243,8 +249,8 @@ namespace Johnson.FileCopyMonitor {
 				};
 				proc.myExecutable.Exited += proc.OnProcessComplete;
 				proc.myExecutable.Start();
-			} else if ( 0 < proc.myFilePathName.Count ) {
-				proc.myTimer.Change( proc.Interval, 0 );
+			} else if ( 0 < proc.FilePathName.Count ) {
+				proc.SetTimer( proc.Interval );
 			}
 		}
 		private static System.Boolean MoveFile( System.String source, System.String destination ) {
@@ -258,7 +264,6 @@ namespace Johnson.FileCopyMonitor {
 			return output;
 		}
 		#endregion static methods
-
 
 	}
 
