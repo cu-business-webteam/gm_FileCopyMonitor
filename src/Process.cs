@@ -22,7 +22,7 @@ namespace Johnson.FileCopyMonitor {
 			myTimer = new System.Threading.Timer( Process.OnAlarm, this, -1, 0 );
 			myFilePathName = System.Collections.Immutable.ImmutableHashSet<System.String>.Empty;
 			myState = 0;
-			myFileSystemWatcher = new System.Collections.Immutable.ImmutableHashSet<System.IO.FileSystemWatcher>.Empty;
+			myFileSystemWatcher = System.Collections.Immutable.ImmutableHashSet<System.IO.FileSystemWatcher>.Empty;
 			var exec = configuration.Execute;
 			if ( null != exec ) {
 				this.Arguments = exec.Arguments;
@@ -36,6 +36,7 @@ namespace Johnson.FileCopyMonitor {
 					fsw.IncludeSubdirectories = false;
 					fsw.Created += this.OnCreated;
 					fsw.Renamed += this.OnRename;
+					fsw.Deleted += this.OnDeleted;
 					fsw.NotifyFilter = ( System.IO.NotifyFilters.CreationTime | System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size );
 					myFileSystemWatcher = myFileSystemWatcher.Add( fsw );
 				}
@@ -147,39 +148,47 @@ namespace Johnson.FileCopyMonitor {
 
 		private void OnChanged( System.Object sender, System.IO.FileSystemEventArgs e ) {
 			var fp = e.FullPath;
-			if ( !myFilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
+			if ( !this.FilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
 				this.AddFileToList( fp );
 			}
-			if ( 0 < myFilePathName.Count ) {
+			if ( 0 < this.FilePathName.Count ) {
 				this.SetTimer( this.Interval );
+			}
+		}
+		private void OnDeleted( System.Object sender, System.IO.FileSystemEventArgs e ) {
+			var fp = e.FullPath;
+			if ( this.FilePathName.Contains( fp ) ) {
+				this.RemoveFileFromList( fp );
 			}
 		}
 		private void OnCreated( System.Object sender, System.IO.FileSystemEventArgs e ) {
 			var fp = e.FullPath;
-			if ( !myFilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
+			if ( !this.FilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
 				this.AddFileToList( fp );
 			}
-			if ( 0 < myFilePathName.Count ) {
+			if ( 0 < this.FilePathName.Count ) {
 				this.SetTimer( this.Interval );
 			}
 		}
 		private void OnRename( System.Object sender, System.IO.RenamedEventArgs e ) {
-			if ( myFilePathName.Contains( e.OldFullPath ) ) {
+			if ( this.FilePathName.Contains( e.OldFullPath ) ) {
 				this.RemoveFileFromList( e.OldFullPath );
 			}
 			var fp = e.FullPath;
-			if ( !myFilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
+			if ( !this.FilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
 				this.AddFileToList( fp );
 			}
-			if ( 0 < myFilePathName.Count ) {
+			if ( 0 < this.FilePathName.Count ) {
 				this.SetTimer( this.Interval );
 			}
 		}
 
 		private void OnProcessComplete( System.Object sender, System.EventArgs e ) {
 			System.Threading.Volatile.Write( ref myState, 0 );
+			if ( 0 < this.FilePathName.Count ) {
+				this.SetTimer( this.Interval );
+			}
 		}
-
 		private void AddFileToList( System.String file ) {
 			System.Collections.Immutable.IImmutableSet<System.String> res;
 			System.Collections.Immutable.IImmutableSet<System.String> original;

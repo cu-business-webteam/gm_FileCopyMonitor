@@ -13,10 +13,10 @@ namespace Johnson.FileCopyMonitor {
 		public MonitorService() : base() {
 			this.AutoLog = true;
 
+			this.CanPauseAndContinue = true;
+			this.CanStop = true;
 			this.CanHandlePowerEvent = false;
 			this.CanHandleSessionChangeEvent = false;
-			this.CanPauseAndContinue = false;
-			this.CanStop = true;
 
 			this.ServiceName = "File Copy Monitor";
 
@@ -47,11 +47,19 @@ namespace Johnson.FileCopyMonitor {
 			}
 			base.OnStop();
 		}
+		protected override sealed void OnPause() {
+			foreach ( var proc in myProcess ) {
+				proc.Pause();
+			}
+			base.OnPause();
+		}
+		protected override sealed void OnContinue() {
+			foreach ( var proc in myProcess ) {
+				proc.Continue();
+			}
+			base.OnPause();
+		}
 		#endregion methods
-
-
-		#region static methods
-		#endregion static methods
 
 	}
 

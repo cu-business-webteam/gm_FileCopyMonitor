@@ -4,8 +4,8 @@ namespace Johnson.FileCopyMonitor {
 
 	public static class Program {
 
-		public static System.Int32 Main( System.String[] args ) {
-			throw new System.NotImplementedException();
+		public static void Main() {
+			System.ServiceProcess.ServiceBase.Run( new MonitorService() );
 		}
 
 	}
