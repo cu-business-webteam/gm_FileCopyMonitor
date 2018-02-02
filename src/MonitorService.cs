@@ -18,7 +18,7 @@ namespace Johnson.FileCopyMonitor {
 			this.CanHandlePowerEvent = false;
 			this.CanHandleSessionChangeEvent = false;
 
-			this.ServiceName = "File Copy Monitor";
+			this.ServiceName = "gm_FileCopyMonitor";
 
 			myProcess = new System.Collections.Generic.List<Process>();
 		}
