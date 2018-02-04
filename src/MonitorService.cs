@@ -61,6 +61,14 @@ namespace Johnson.FileCopyMonitor {
 		}
 		#endregion methods
 
+		private void InitializeComponent() {
+			// 
+			// MonitorService
+			// 
+			this.CanPauseAndContinue = true;
+			this.ServiceName = "gm_FileCopyMonitor";
+
+		}
 	}
 
 }

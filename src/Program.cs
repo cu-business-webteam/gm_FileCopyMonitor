@@ -4,7 +4,7 @@ namespace Johnson.FileCopyMonitor {
 
 	public static class Program {
 
-		public static void Main() {
+		public static void Main( System.String[] args ) {
 			System.ServiceProcess.ServiceBase.Run( new MonitorService() );
 		}
 
