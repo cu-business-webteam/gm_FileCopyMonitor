@@ -28,13 +28,13 @@
 			// 
 			// FileCopyMonitorProcessInstaller
 			// 
-			this.FileCopyMonitorProcessInstaller.Account = System.ServiceProcess.ServiceAccount.NetworkService;
 			this.FileCopyMonitorProcessInstaller.Password = null;
 			this.FileCopyMonitorProcessInstaller.Username = null;
 			// 
 			// FileCopyMonitorServiceInstaller
 			// 
 			this.FileCopyMonitorServiceInstaller.ServiceName = "gm_FileCopyMonitor";
+			this.FileCopyMonitorServiceInstaller.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
 			// 
 			// ProjectInstaller
 			// 
