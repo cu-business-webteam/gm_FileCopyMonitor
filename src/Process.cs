@@ -33,7 +33,7 @@ namespace Johnson.FileCopyMonitor {
 			System.IO.FileSystemWatcher fsw;
 			foreach ( var path in configuration.Paths.OfType<Configuration.PathElement>() ) {
 				foreach ( var filter  in path.Filters.OfType<Configuration.FilterElement>() ) {
-					fsw = new System.IO.FileSystemWatcher( path.Path, filter.Filter );
+					fsw = new System.IO.FileSystemWatcher( System.Environment.ExpandEnvironmentVariables( path.Path ), System.Environment.ExpandEnvironmentVariables( filter.Filter ) );
 					fsw.IncludeSubdirectories = false;
 					fsw.Created += this.OnCreated;
 					fsw.Renamed += this.OnRename;
@@ -239,7 +239,7 @@ namespace Johnson.FileCopyMonitor {
 			foreach ( var file in list ) {
 				if ( !System.IO.File.Exists( file ) ) {
 					proc.RemoveFileFromList( file );
-				} else if ( Process.MoveFile( file, System.IO.Path.Combine( proc.DestinationPath, System.IO.Path.GetFileName( file ) ) ) ) {
+				} else if ( Process.MoveFile( file, System.IO.Path.Combine( System.Environment.ExpandEnvironmentVariables( proc.DestinationPath ), System.IO.Path.GetFileName( file ) ) ) ) {
 					movedAny = true;
 					proc.RemoveFileFromList( file );
 				} else {
@@ -250,11 +250,11 @@ namespace Johnson.FileCopyMonitor {
 				System.Threading.Volatile.Write( ref proc.myState, 1 );
 				proc.myExecutable = new System.Diagnostics.Process {
 					StartInfo = new System.Diagnostics.ProcessStartInfo {
-						Arguments = proc.Arguments,
+						Arguments = System.Environment.ExpandEnvironmentVariables( proc.Arguments ),
 						CreateNoWindow = false,
-						FileName = proc.PathName,
+						FileName = System.Environment.ExpandEnvironmentVariables( proc.PathName ),
 						UseShellExecute = false,
-						WorkingDirectory = proc.WorkingDirectory
+						WorkingDirectory = System.Environment.ExpandEnvironmentVariables( proc.WorkingDirectory )
 					}
 				};
 				proc.myExecutable.Exited += proc.OnProcessComplete;
