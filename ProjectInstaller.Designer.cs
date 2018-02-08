@@ -28,6 +28,7 @@
 			// 
 			// FileCopyMonitorProcessInstaller
 			// 
+			this.FileCopyMonitorProcessInstaller.Account = System.ServiceProcess.ServiceAccount.NetworkService;
 			this.FileCopyMonitorProcessInstaller.Password = null;
 			this.FileCopyMonitorProcessInstaller.Username = null;
 			// 
