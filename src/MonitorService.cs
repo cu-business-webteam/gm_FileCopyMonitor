@@ -30,6 +30,14 @@ namespace Johnson.FileCopyMonitor {
 
 
 		#region methods
+		private void InitializeComponent() {
+			// 
+			// MonitorService
+			// 
+			this.CanPauseAndContinue = true;
+			this.ServiceName = "gm_FileCopyMonitor";
+		}
+
 		protected sealed override void OnStart( System.String[] args ) {
 			var section = Configuration.FileCopyMonitorSection.GetSection();
 			if ( null == section ) {
@@ -61,14 +69,6 @@ namespace Johnson.FileCopyMonitor {
 		}
 		#endregion methods
 
-		private void InitializeComponent() {
-			// 
-			// MonitorService
-			// 
-			this.CanPauseAndContinue = true;
-			this.ServiceName = "gm_FileCopyMonitor";
-
-		}
 	}
 
 }

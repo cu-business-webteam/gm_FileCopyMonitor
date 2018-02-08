@@ -34,6 +34,9 @@
 			// 
 			// FileCopyMonitorServiceInstaller
 			// 
+			this.FileCopyMonitorServiceInstaller.DelayedAutoStart = true;
+			this.FileCopyMonitorServiceInstaller.Description = "Monitors multiple drop-off directories for pick-up and copy to elsewhere.";
+			this.FileCopyMonitorServiceInstaller.DisplayName = "File Copy Monitor Service";
 			this.FileCopyMonitorServiceInstaller.ServiceName = "gm_FileCopyMonitor";
 			this.FileCopyMonitorServiceInstaller.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
 			// 
