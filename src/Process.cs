@@ -18,6 +18,7 @@ namespace Johnson.FileCopyMonitor {
 			if ( null == configuration ) {
 				throw new System.ArgumentNullException( "configuration" );
 			}
+			this.DestinationPath = configuration.Destination;
 			this.Interval = configuration.Interval * 1000;
 			myTimer = new System.Threading.Timer( Process.OnAlarm, this, -1, 0 );
 			myFilePathName = System.Collections.Immutable.ImmutableHashSet<System.String>.Empty;

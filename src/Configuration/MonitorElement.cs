@@ -56,6 +56,17 @@ namespace Johnson.FileCopyMonitor.Configuration {
 				this[ "execute" ] = value;
 			}
 		}
+
+		[System.IO.IODescription( "The destination directory" )]
+		[System.Configuration.ConfigurationProperty( "destination", IsRequired = true, IsKey = false )]
+		public System.String Destination {
+			get {
+				return (System.String)this[ "destination" ];
+			}
+			set {
+				this[ "destination" ] = value;
+			}
+		}
 		#endregion properties
 
 	}
