@@ -47,12 +47,16 @@ namespace Johnson.FileCopyMonitor {
 			if ( ( null == monitors ) || !monitors.Any() ) {
 				return;
 			}
-			throw new System.NotImplementedException();
+			foreach ( var m in monitors ) {
+				myProcess.Add( new Process( m ) );
+			}
+			System.Threading.Tasks.Parallel.ForEach( myProcess.AsParallel(), x => x.Start() );
 		}
 		protected sealed override void OnStop() {
 			foreach ( var proc in myProcess ) {
 				proc.Dispose();
 			}
+			myProcess = new System.Collections.Generic.List<Process>();
 			base.OnStop();
 		}
 		protected override sealed void OnPause() {
