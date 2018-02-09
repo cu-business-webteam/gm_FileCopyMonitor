@@ -1,0 +1,1 @@
+@echo "something happened" >> C:\gm_FileCopyMonitor\run.log.txt
