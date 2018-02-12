@@ -38,11 +38,9 @@ namespace Johnson.FileCopyMonitor {
 			this.ServiceName = "gm_FileCopyMonitor";
 		}
 
-#if DEBUG
-		public void Start( System.String[] args ) {
+		public void Start( System.String[ ] args ) {
 			this.OnStart( args );
 		}
-#endif
 		protected sealed override void OnStart( System.String[] args ) {
 			var section = Configuration.FileCopyMonitorSection.GetSection();
 			if ( null == section ) {

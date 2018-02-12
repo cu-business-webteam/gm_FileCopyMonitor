@@ -5,7 +5,6 @@ namespace Johnson.FileCopyMonitor {
 	public static class Program {
 
 		public static void Main( System.String[] args ) {
-#if DEBUG
 			if ( ( null != args ) && args.Any(
 				x => System.String.Equals( x, "/run", System.StringComparison.OrdinalIgnoreCase )
 			) ) {
@@ -16,7 +15,6 @@ namespace Johnson.FileCopyMonitor {
 				}
 				return;
 			}
-#endif
 			System.ServiceProcess.ServiceBase.Run( new MonitorService() );
 		}
 

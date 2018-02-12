@@ -11,6 +11,12 @@ namespace Johnson.FileCopyMonitor {
 	public partial class ProjectInstaller : System.Configuration.Install.Installer {
 		public ProjectInstaller() {
 			InitializeComponent();
+#if DEBUG || TRACE
+			this.FileCopyMonitorServiceInstaller.StartType = System.ServiceProcess.ServiceStartMode.Manual;
+#else
+			this.FileCopyMonitorServiceInstaller.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
+			this.FileCopyMonitorServiceInstaller.DelayedAutoStart = true;
+#endif
 		}
 	}
 }
