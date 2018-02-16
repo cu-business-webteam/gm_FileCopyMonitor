@@ -5,6 +5,7 @@ namespace Johnson.FileCopyMonitor {
 	public sealed class Process : System.IDisposable {
 
 		#region fields
+		private readonly System.Action<System.String> myLog;
 		private System.Collections.Immutable.IImmutableSet<System.IO.FileSystemWatcher> myFileSystemWatcher;
 		private System.Threading.Timer myTimer;
 		private System.Collections.Immutable.IImmutableSet<System.String> myFilePathName;
@@ -14,10 +15,18 @@ namespace Johnson.FileCopyMonitor {
 
 
 		#region .ctor
-		public Process( Configuration.MonitorElement configuration ) : base() {
+		public Process( Configuration.MonitorElement configuration, System.Diagnostics.EventLog eventLog ) : base() {
 			if ( null == configuration ) {
 				throw new System.ArgumentNullException( "configuration" );
 			}
+			myLog = ( null != eventLog )
+				? myLog = ( x ) => System.Console.Error.WriteLine( x )
+				: myLog = ( x ) => {
+					System.Console.Error.WriteLine( x );
+					eventLog.WriteEntry( x, System.Diagnostics.EventLogEntryType.Information );
+				}
+			;
+
 			this.DestinationPath = configuration.Destination;
 			this.Interval = configuration.Interval * 1000;
 			myTimer = new System.Threading.Timer( Process.OnAlarm, this, -1, 0 );
@@ -33,7 +42,12 @@ namespace Johnson.FileCopyMonitor {
 			System.IO.FileSystemWatcher fsw;
 			foreach ( var path in configuration.Paths.OfType<Configuration.PathElement>() ) {
 				foreach ( var filter  in path.Filters.OfType<Configuration.FilterElement>() ) {
-					fsw = new System.IO.FileSystemWatcher( System.Environment.ExpandEnvironmentVariables( path.Path ), System.Environment.ExpandEnvironmentVariables( filter.Filter ) );
+					try {
+						fsw = new System.IO.FileSystemWatcher( System.Environment.ExpandEnvironmentVariables( path.Path ), System.Environment.ExpandEnvironmentVariables( filter.Filter ) );
+					} catch ( System.Exception e ) {
+						myLog( System.String.Format( "Exception: {0}\r\n{1}\r\nStack Trace follows:\r\n{2}", e.GetType().ToString(), e.Message, e.StackTrace ) );
+						throw;
+					}
 					fsw.IncludeSubdirectories = false;
 					fsw.Created += this.OnCreated;
 					fsw.Renamed += this.OnRename;
@@ -136,6 +150,7 @@ namespace Johnson.FileCopyMonitor {
 			) ) {
 				foreach ( var file in System.IO.Directory.GetFiles( fsw.Path, fsw.Filter ) ) {
 					this.AddFileToList( file );
+					myLog( System.String.Format( "Watching file {0}", file ) );
 				}
 				fsw.EnableRaisingEvents = true;
 			}
@@ -149,6 +164,7 @@ namespace Johnson.FileCopyMonitor {
 
 		private void OnChanged( System.Object sender, System.IO.FileSystemEventArgs e ) {
 			var fp = e.FullPath;
+			myLog( System.String.Format( "OnChanged: {0}", fp ) );
 			if ( !this.FilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
 				this.AddFileToList( fp );
 			}
@@ -164,6 +180,7 @@ namespace Johnson.FileCopyMonitor {
 		}
 		private void OnCreated( System.Object sender, System.IO.FileSystemEventArgs e ) {
 			var fp = e.FullPath;
+			myLog( System.String.Format( "OnCreated: {0}", fp ) );
 			if ( !this.FilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
 				this.AddFileToList( fp );
 			}
@@ -172,10 +189,12 @@ namespace Johnson.FileCopyMonitor {
 			}
 		}
 		private void OnRename( System.Object sender, System.IO.RenamedEventArgs e ) {
-			if ( this.FilePathName.Contains( e.OldFullPath ) ) {
-				this.RemoveFileFromList( e.OldFullPath );
+			var ofp = e.OldFullPath;
+			if ( this.FilePathName.Contains( ofp ) ) {
+				this.RemoveFileFromList( ofp );
 			}
 			var fp = e.FullPath;
+			myLog( System.String.Format( "OnRename: {0} => {1}", ofp, fp ) );
 			if ( !this.FilePathName.Contains( fp ) && System.IO.File.Exists( fp ) ) {
 				this.AddFileToList( fp );
 			}
@@ -185,6 +204,9 @@ namespace Johnson.FileCopyMonitor {
 		}
 
 		private void OnProcessComplete( System.Object sender, System.EventArgs e ) {
+#if TRACE
+			myLog( "Execution complete" );
+#endif
 			System.Threading.Volatile.Write( ref myState, 0 );
 			if ( 0 < this.FilePathName.Count ) {
 				this.SetTimer( this.Interval );
@@ -236,19 +258,30 @@ namespace Johnson.FileCopyMonitor {
 			System.Boolean movedAny = false;
 			System.Boolean someLocked = false;
 			var list = proc.FilePathName;
+			var log = proc.myLog;
 			foreach ( var file in list ) {
+				log( System.String.Format( "Attemptinng to process file {0}", file ) );
 				if ( !System.IO.File.Exists( file ) ) {
 					proc.RemoveFileFromList( file );
-				} else if ( Process.MoveFile( file, System.IO.Path.Combine( System.Environment.ExpandEnvironmentVariables( proc.DestinationPath ), System.IO.Path.GetFileName( file ) ) ) ) {
+#if TRACE
+					log( System.String.Format( "File not found: {0}", file ) );
+#endif
+				} else if ( Process.MoveFile( proc.myLog, file, System.IO.Path.Combine( System.Environment.ExpandEnvironmentVariables( proc.DestinationPath ), System.IO.Path.GetFileName( file ) ) ) ) {
+#if TRACE
+					log( System.String.Format( "Moved: {0}", file ) );
+#endif
 					movedAny = true;
 					proc.RemoveFileFromList( file );
 				} else {
+#if TRACE
+					log( System.String.Format( "Locked File: {0}", file ) );
+#endif
 					someLocked = true;
 				}
 			}
 			if ( movedAny && !someLocked ) {
 				System.Threading.Volatile.Write( ref proc.myState, 1 );
-				proc.myExecutable = new System.Diagnostics.Process {
+				var exec = new System.Diagnostics.Process {
 					StartInfo = new System.Diagnostics.ProcessStartInfo {
 						Arguments = System.Environment.ExpandEnvironmentVariables( proc.Arguments ),
 						CreateNoWindow = false,
@@ -257,19 +290,25 @@ namespace Johnson.FileCopyMonitor {
 						WorkingDirectory = System.Environment.ExpandEnvironmentVariables( proc.WorkingDirectory )
 					}
 				};
-				proc.myExecutable.Exited += proc.OnProcessComplete;
-				proc.myExecutable.Start();
+				exec.Exited += proc.OnProcessComplete;
+				exec.Start();
+				proc.myExecutable = exec;
+#if TRACE
+				proc.myLog( System.String.Format( "Launching executable: {0}", exec.StartInfo.FileName ) );
+#endif
 			} else if ( 0 < proc.FilePathName.Count ) {
 				proc.SetTimer( proc.Interval );
 			}
 		}
-		private static System.Boolean MoveFile( System.String source, System.String destination ) {
+		private static System.Boolean MoveFile( System.Action<System.String> log, System.String source, System.String destination ) {
 			var output = false;
 			try {
 				System.IO.File.Move( source, destination );
 				output = true;
-			} catch ( System.Exception ) {
-				;
+			} catch ( System.Exception e ) {
+#if TRACE
+				log( System.String.Format( "Exception moving file: {0}", e.Message ) );
+#endif
 			}
 			return output;
 		}
