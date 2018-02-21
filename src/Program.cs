@@ -9,13 +9,13 @@ namespace Johnson.FileCopyMonitor {
 				x => System.String.Equals( x, "/run", System.StringComparison.OrdinalIgnoreCase )
 			) ) {
 				System.Console.Error.WriteLine( "(Strike any key to quit)" );
-				using ( var m = new MonitorService() ) {
+				using ( var m = new MonitorService( false ) ) {
 					m.Start( null );
 					System.Console.ReadKey( true );
 				}
 				return;
 			}
-			System.ServiceProcess.ServiceBase.Run( new MonitorService() );
+			System.ServiceProcess.ServiceBase.Run( new MonitorService( true ) );
 		}
 
 	}

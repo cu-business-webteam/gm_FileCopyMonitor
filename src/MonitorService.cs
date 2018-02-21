@@ -8,11 +8,14 @@ namespace Johnson.FileCopyMonitor {
 		private const System.String theServiceName = "gm_FileCopyMonitor";
 
 		private System.Collections.Generic.ICollection<Process> myProcess;
+		private readonly System.Action<System.String> myLog;
 		#endregion fields
 
 
 		#region .ctor
-		public MonitorService() : base() {
+		public MonitorService() : this( false ) {
+		}
+		public MonitorService( System.Boolean logEvents ) : base() {
 			this.AutoLog = true;
 
 			this.CanPauseAndContinue = true;
@@ -23,6 +26,14 @@ namespace Johnson.FileCopyMonitor {
 			this.ServiceName = theServiceName;
 
 			myProcess = new System.Collections.Generic.List<Process>();
+
+			myLog = ( x ) => System.Console.Error.WriteLine( x );
+			if ( logEvents ) {
+				myLog = ( x ) => {
+					System.Console.Error.WriteLine( x );
+					this.EventLog.WriteEntry( x, System.Diagnostics.EventLogEntryType.Information );
+				};
+			}
 		}
 		#endregion .ctor
 
@@ -58,29 +69,27 @@ namespace Johnson.FileCopyMonitor {
 			System.String entry;
 			foreach ( var m in monitors ) {
 				try {
-#if TRACE
-				myProcess.Add( new Process( m, this.EventLog ) );
-#else
-				myProcess.Add( new Process( m, null ) );
-#endif
+					myProcess.Add( new Process( m, myLog ) );
 				} catch ( System.Exception e ) {
-					this.EventLog.WriteEntry( "Exception: {0}\r\n{1}\r\nStack Trace follows:\r\n{2}", System.Diagnostics.EventLogEntryType.Information );
+					myLog( System.String.Format( "Exception: {0}\r\n{1}\r\nStack Trace follows:\r\n{2}", e.GetType().Name, e.Message, e.StackTrace ) );
 					this.Stop();
 					throw;
 				}
+#if TRACE
 				name = m.Name;
 				foreach ( var path in m.Paths.OfType<Configuration.PathElement>() ) {
 					foreach ( var filter in path.Filters.OfType<Configuration.FilterElement>() ) {
 						entry = System.String.Format( "Monitoring {0} : {1}\\{2}", name, path.Path, filter.Filter );
-						this.EventLog.WriteEntry( entry, System.Diagnostics.EventLogEntryType.Information );
-						System.Console.Error.WriteLine( entry );
+						myLog( entry );
 					}
 				}
+#endif
 			}
 			System.Threading.Tasks.Parallel.ForEach( myProcess.AsParallel(), x => x.Start() );
+#if TRACE
 			entry = "All monitors activated";
-			this.EventLog.WriteEntry( entry, System.Diagnostics.EventLogEntryType.Information );
-			System.Console.Error.WriteLine( entry );
+			myLog( entry );
+#endif
 		}
 		protected sealed override void OnStop() {
 			foreach ( var proc in myProcess ) {
