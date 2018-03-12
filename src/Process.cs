@@ -159,7 +159,9 @@ namespace Johnson.FileCopyMonitor {
 
 		private void OnChanged( System.Object sender, System.IO.FileSystemEventArgs e ) {
 			var fp = e.FullPath;
+#if TRACE
 			myLog( System.String.Format( "OnChanged: {0}", fp ) );
+#endif
 			this.AddFileToList( fp );
 			this.SetTimer( this.Interval );
 		}
@@ -170,7 +172,9 @@ namespace Johnson.FileCopyMonitor {
 		}
 		private void OnCreated( System.Object sender, System.IO.FileSystemEventArgs e ) {
 			var fp = e.FullPath;
+#if TRACE
 			myLog( System.String.Format( "OnCreated: {0}", fp ) );
+#endif
 			this.AddFileToList( fp );
 			this.SetTimer( this.Interval );
 		}
@@ -249,9 +253,7 @@ namespace Johnson.FileCopyMonitor {
 					movedAny = true;
 					this.RemoveFileFromList( file );
 				} else {
-#if TRACE
 					myLog( System.String.Format( "Locked File: {0}", file ) );
-#endif
 					someLocked = true;
 				}
 			}
