@@ -286,6 +286,7 @@ namespace Johnson.FileCopyMonitor {
 		private static System.Boolean MoveFile( System.Action<System.String> log, System.String source, System.String destination ) {
 			var output = false;
 			try {
+				System.IO.File.Delete( destination );
 				System.IO.File.Move( source, destination );
 				output = true;
 			} catch ( System.Exception e ) {
